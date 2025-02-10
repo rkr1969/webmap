@@ -1,4 +1,6 @@
-geopandas
-plotly
-altair
+requests
+folium
+ipywidgets
 pandas
+geopandas
+ipython
