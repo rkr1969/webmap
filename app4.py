@@ -22,7 +22,7 @@ url_landuse = "https://raw.githubusercontent.com/rkr1969/webmap/main/Landuse_War
 geojson_data = load_geojson(url_landuse)
 
 # Load GeoJSON data for Management Regime
-url_management_regime = "https://raw.githubusercontent.com/rkr1969/webmap/main/Management_Regime.geojson"
+url_management_regime = "https://raw.githubusercontent.com/rkr1969/webmap/main/Management Regime.geojson"
 management_regime_data = load_geojson(url_management_regime)
 
 if geojson_data is None or management_regime_data is None:
