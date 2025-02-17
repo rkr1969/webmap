@@ -147,13 +147,8 @@ summary_df = (
 total_area_per_subdivision = summary_df.groupby("subdivision")["total_area_ha"].transform("sum")
 
 # Add percentage column
-summary_df["percentage"] = (summary_df["total_area_ha"] / total_area_per_subdivision) * 100
+summary_df["percentage"] = ((summary_df["total_area_ha"] / total_area_per_subdivision) * 100).round(2)
 
-# Display the summarized table
+# Display the summarized table with only relevant columns
 st.write("### Vegetation Summary by Subdivision")
-st.dataframe(summary_df)
-
-# Optionally, format the percentage column for better readability
-summary_df["percentage"] = summary_df["percentage"].round(2)
-st.write("### Formatted Vegetation Summary")
-st.dataframe(summary_df)
+st.dataframe(summary_df[["subdivision", "vegetation_type", "total_area_ha", "percentage"]])
