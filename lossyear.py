@@ -68,6 +68,10 @@ if st.session_state.folium_map is None:
     # Add Fullscreen plugin
     Fullscreen().add_to(m)
 
+    # Create FeatureGroups for each layer
+    main_layer_group = folium.FeatureGroup(name="Tree Loss by Year (Colored Polygons)")
+    sum_layer_group = folium.FeatureGroup(name="Subdivision Outlines (Black Borders)")
+
     # Add GeoJSON layers with random colors based on Year
     for year, color in year_color_map.items():
         year_data = main_gdf[main_gdf['Year'] == year]
@@ -85,7 +89,7 @@ if st.session_state.folium_map is None:
                 localize=True,  # Format numbers for better readability
                 sticky=True  # Keep tooltip visible while hovering
             )
-        ).add_to(m)
+        ).add_to(main_layer_group)
 
     # Add summary layer (black outlines)
     folium.GeoJson(
@@ -101,7 +105,14 @@ if st.session_state.folium_map is None:
             localize=True,
             sticky=True
         )
-    ).add_to(m)
+    ).add_to(sum_layer_group)
+
+    # Add FeatureGroups to the map
+    main_layer_group.add_to(m)
+    sum_layer_group.add_to(m)
+
+    # Add LayerControl to toggle layers
+    folium.LayerControl().add_to(m)
 
     # Store the map in session state
     st.session_state.folium_map = m
