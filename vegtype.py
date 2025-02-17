@@ -1,10 +1,8 @@
 import streamlit as st
-import pandas as pd
 import geopandas as gpd
 import folium
 from folium.plugins import Fullscreen
 import random
-import plotly.express as px
 from streamlit_folium import st_folium
 
 # Initialize session state variables
@@ -75,8 +73,8 @@ unique_vegetation_types = sorted(vegetation_gdf['vegetation_type'].unique())
 colors = ["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)]) for _ in unique_vegetation_types]
 vegetation_color_map = {vegetation_type: color for vegetation_type, color in zip(unique_vegetation_types, colors)}
 
-# Create Folium map
-if st.session_state.folium_map is None:
+# Create Folium map only if it hasn't been initialized yet
+if not st.session_state.map_initialized:
     try:
         m = folium.Map(
             location=[vegetation_gdf.geometry.centroid.y.mean(), vegetation_gdf.geometry.centroid.x.mean()],
@@ -135,4 +133,4 @@ if st.session_state.folium_map is None:
 
 # Display the Folium map using Streamlit
 if st.session_state.folium_map:
-    st_folium(st.session_state.folium_map, width=700, height=500)
+    st_folium(st.session_state.folium_map, width=700, height=500, returned_objects=[])
