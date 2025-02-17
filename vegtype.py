@@ -115,7 +115,12 @@ if st.session_state.folium_map is None:
             ).add_to(vegetation_layer_group)
 
         # Add subdivision outlines layer
-        folium.GeoJson(
-            sum_gdf,
-            style_function=lambda feature: {
-                "color":})
+folium.GeoJson(
+    sum_gdf,
+    style_function=lambda feature: {
+        "color": "black",  # Set outline color
+        "weight": 2,       # Set line weight
+        "fillOpacity": 0   # Make sure it is only an outline
+    }
+).add_to(map)
+
