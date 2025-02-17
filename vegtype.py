@@ -134,3 +134,6 @@ if not st.session_state.map_initialized:
 # Display the Folium map using Streamlit
 if st.session_state.folium_map:
     st_folium(st.session_state.folium_map, width=700, height=500, returned_objects=[])
+    # Display a table of vegetation data
+st.write("Vegetation Data:")
+st.dataframe(vegetation_gdf)
