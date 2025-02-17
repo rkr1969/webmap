@@ -37,18 +37,4 @@ if st.session_state.vegetation_gdf is None or st.session_state.sum_gdf is None:
     sum_gdf = sum_gdf.to_crs(epsg=4326)
 
     # Fix invalid geometries
-    vegetation_gdf['geometry'] = vegetation_gdf.geometry.apply(lambda geom: geom.buffer(0) if not geom.is_valid else geom)
-    sum_gdf['geometry'] = sum_gdf.geometry.apply(lambda geom: geom.buffer(0) if not geom.is_valid else geom)
-
-    # Store data in session state
-    st.session_state.vegetation_gdf = vegetation_gdf
-    st.session_state.sum_gdf = sum_gdf
-
-# Retrieve data from session state
-vegetation_gdf = st.session_state.vegetation_gdf
-sum_gdf = st.session_state.sum_gdf
-
-# Generate random colors for vegetation types
-unique_vegetation_types = sorted(vegetation_gdf['vegetation_type'].unique())
-colors = ["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)]) for _ in unique_vegetation_types]
-vegetation_color_map = {vegetation_type: color for vegetation_type, color in
+    vegetation_gdf['geometry'] = vegetation_gdf.geometry.apply(lambda geom: geom.buffer(0)
