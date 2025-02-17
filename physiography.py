@@ -19,6 +19,13 @@ COLORS = {
 def load_data():
     url = "https://raw.githubusercontent.com/rkr1969/webmap/main/physiography_subdivision.geojson"
     gdf = gpd.read_file(url)
+    
+    # Debugging: Inspect the GeoDataFrame
+    st.write("GeoDataFrame Info:")
+    st.write(gdf.info())
+    st.write("First 5 rows of GeoDataFrame:")
+    st.write(gdf.head())
+    
     return gdf
 
 # Function to calculate summary tables
@@ -77,31 +84,10 @@ def main():
             'fillOpacity': 1  # Transparency is already included in color
         }
 
-    def tooltip_function(feature):
-        props = feature['properties']
-        return f"""
-        <b>Subdivision:</b> {props['subdivision']}<br>
-        <b>Physiography:</b> {props['Physiography']}<br>
-        <b>Area (sq km):</b> {props['Area_sqkm']}
-        """
-
-    GeoJson(
-        gdf,
+    folium.GeoJson(
+        gdf.to_json(),  # Convert to JSON string
         style_function=style_function,
         tooltip=folium.GeoJsonTooltip(fields=['subdivision', 'Physiography', 'Area_sqkm'], aliases=['Subdivision', 'Physiography', 'Area (sq km)'])
-    ).add_to(m)
-
-    # Add subdivision_sum layer
-    @st.cache_data
-    def load_subdivision_sum():
-        url = "https://raw.githubusercontent.com/rkr1969/webmap/main/subdivision_sum.geojson"
-        return gpd.read_file(url)
-
-    subdivision_sum = load_subdivision_sum()
-
-    GeoJson(
-        subdivision_sum,
-        tooltip=folium.GeoJsonTooltip(fields=['subdivision'], aliases=['Subdivision'])
     ).add_to(m)
 
     # Display the map
