@@ -4,12 +4,13 @@ import geopandas as gpd
 import folium
 from folium import GeoJsonPopup
 from streamlit_folium import st_folium
+import plotly.express as px  # For interactive pie chart
 
 # Title of the app
 st.title("Management Regime Map")
 
 # Load the GeoJSON file from GitHub
-GITHUB_URL = "https://raw.githubusercontent.com/rkr1969/webmap/main/your_geojson_file.geojson"
+GITHUB_URL = "https://raw.githubusercontent.com/rkr1969/webmap/main/Management Regime.geojson"
 gdf = gpd.read_file(GITHUB_URL)
 
 # Ensure the GeoDataFrame has the required columns
@@ -27,7 +28,18 @@ st.dataframe(area_summary)
 st.subheader("Detailed Table")
 st.dataframe(gdf[['Name', 'code', 'regime', 'area_ha']])
 
-# Step 3: Create a Folium map with popups
+# Step 3: Create an interactive pie chart for 'regime' vs 'area_ha'
+st.subheader("Pie Chart: Area Distribution by Management Regime")
+fig_pie = px.pie(
+    area_summary,
+    names='regime',
+    values='area_ha',
+    title="Area Distribution by Management Regime",
+    hole=0.3,  # Optional: Creates a donut chart
+)
+st.plotly_chart(fig_pie, use_container_width=True)
+
+# Step 4: Create a Folium map with popups
 m = folium.Map(location=[gdf.geometry.centroid.y.mean(), gdf.geometry.centroid.x.mean()], zoom_start=10)
 
 # Define the popup fields
