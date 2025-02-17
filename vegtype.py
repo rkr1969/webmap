@@ -118,4 +118,4 @@ if st.session_state.folium_map is None:
         folium.GeoJson(
             sum_gdf,
             style_function=lambda feature: {
-                "color":}
+                "color":})
