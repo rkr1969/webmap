@@ -23,7 +23,7 @@ COLORS = {
 def calculate_summary_tables(gdf):
     # Table-1: Subdivision-wise percentage of total Area_sqkm by physiography
     table1 = (
-        gdf.groupby(['physiography', 'subdivision'])['Area_sqkm']
+        gdf.groupby(['Physiography', 'subdivision'])['Area_sqkm']
         .sum()
         .groupby(level=0)
         .apply(lambda x: 100 * x / x.sum())
@@ -33,7 +33,7 @@ def calculate_summary_tables(gdf):
     # Table-2: Physiography-wise percentage of total Area_sqkm
     total_area = gdf['Area_sqkm'].sum()
     table2 = (
-        gdf.groupby('physiography')['Area_sqkm']
+        gdf.groupby('Physiography')['Area_sqkm']
         .sum()
         .apply(lambda x: 100 * x / total_area)
         .reset_index(name='Percentage')
