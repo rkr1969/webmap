@@ -4,6 +4,7 @@ import geopandas as gpd
 import folium
 from folium.plugins import Fullscreen
 import random
+import plotly.express as px
 from streamlit_folium import st_folium
 
 # Initialize session state variables
@@ -148,3 +149,31 @@ st.download_button(
     file_name='vegetation_type_summary.csv',
     mime='text/csv'
 )
+
+# Interactive Bar Chart: Subdivision and Vegetation Type vs Area (ha)
+st.header("Bar Chart: Subdivision & Vegetation Type vs Area (ha)")
+chart_data = vegetation_gdf.groupby(['subdivision', 'vegetation_type'])['area_ha'].sum().reset_index()
+
+# Create an interactive bar chart using Plotly
+fig = px.bar(
+    chart_data,
+    x="subdivision",
+    y="area_ha",
+    color="vegetation_type",
+    title="Subdivision & Vegetation Type vs Area (ha)",
+    labels={"subdivision": "Subdivision", "area_ha": "Area (ha)", "vegetation_type": "Vegetation Type"},
+    template="plotly_dark",  # Optional: Dark theme for better aesthetics
+    barmode="group"  # Group bars by vegetation type
+)
+
+# Update layout for better readability
+fig.update_layout(
+    xaxis_title="Subdivision",
+    yaxis_title="Area (ha)",
+    legend_title="Vegetation Type",
+    margin=dict(l=50, r=50, t=50, b=50),
+    height=600
+)
+
+# Display the bar chart
+st.plotly_chart(fig, use_container_width=True)
