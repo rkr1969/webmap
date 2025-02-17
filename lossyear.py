@@ -33,7 +33,12 @@ main_layer = pdk.Layer(
     get_polygon='geometry.coordinates',
     stroked=False,
     filled=True,
-    get_fill_color='[%d, %d, %d, 100]' % (*year_color_map[properties['Year']], 100),
+    get_fill_color=[
+        year_color_map[main_gdf['Year'][i]][0], 
+        year_color_map[main_gdf['Year'][i]][1], 
+        year_color_map[main_gdf['Year'][i]][2], 
+        100
+    ],
     opacity=0.4,
     pickable=True,
     auto_highlight=True
