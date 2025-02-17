@@ -6,3 +6,4 @@ geopandas
 ipython
 streamlit
 streamlit-folium
+plotly
