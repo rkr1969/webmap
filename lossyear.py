@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
-import pydeck as pdk
-from datetime import datetime
+import folium
+from folium.plugins import Fullscreen
+from branca.colormap import LinearColormap
 import random
-import plotly.express as px  # For interactive charts
+import plotly.express as px
 
 # Load data from GitHub
 base_url = "https://raw.githubusercontent.com/rkr1969/webmap/main/"
@@ -24,84 +25,57 @@ sum_gdf = load_geojson(sum_layer_url)
 
 # Generate random colors for years
 unique_years = sorted(main_gdf['Year'].unique())
-colors = [tuple(random.randint(0, 255) for _ in range(3)) for _ in unique_years]
+colors = ["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)]) for _ in unique_years]
 year_color_map = {year: color for year, color in zip(unique_years, colors)}
 
-# Add a color column to main_gdf based on the Year
-main_gdf['color'] = main_gdf['Year'].apply(lambda year: list(year_color_map[year]) + [100])
-
-# Ensure geometries are valid and in the correct format
-main_gdf['geometry'] = main_gdf.geometry.apply(lambda geom: geom if geom.is_valid else geom.buffer(0))
-sum_gdf['geometry'] = sum_gdf.geometry.apply(lambda geom: geom if geom.is_valid else geom.buffer(0))
-
-# Reproject geometries to EPSG:4326 (required by PyDeck)
+# Reproject geometries to EPSG:4326 (required by Folium)
 main_gdf = main_gdf.to_crs(epsg=4326)
 sum_gdf = sum_gdf.to_crs(epsg=4326)
 
 # Calculate total tree loss area
 total_loss = main_gdf['Area_hectare'].sum()
 
-# Create PyDeck layers
-main_layer = pdk.Layer(
-    'GeoJsonLayer',  # Use GeoJsonLayer instead of PolygonLayer
-    data=main_gdf.__geo_interface__,  # Pass GeoJSON-compatible data
-    stroked=False,
-    filled=True,
-    get_fill_color='color',  # Reference the precomputed color column
-    opacity=0.4,
-    pickable=True,
-    auto_highlight=True,
-    visible=True  # Initially visible
+# Create Folium map
+m = folium.Map(
+    location=[main_gdf.geometry.centroid.y.mean(), main_gdf.geometry.centroid.x.mean()],
+    zoom_start=10,
+    tiles="OpenStreetMap"  # Use OpenStreetMap as the base layer
 )
 
-sum_layer = pdk.Layer(
-    'GeoJsonLayer',  # Use GeoJsonLayer instead of PolygonLayer
-    data=sum_gdf.__geo_interface__,  # Pass GeoJSON-compatible data
-    stroked=True,
-    filled=False,
-    get_line_color=[0, 0, 0],
-    pickable=True,
-    visible=True  # Initially visible
-)
+# Add Fullscreen plugin
+Fullscreen().add_to(m)
 
-# Set view state
-view_state = pdk.ViewState(
-    latitude=main_gdf.geometry.centroid.y.mean(),
-    longitude=main_gdf.geometry.centroid.x.mean(),
-    zoom=10
-)
+# Add GeoJSON layers with random colors based on Year
+for year, color in year_color_map.items():
+    year_data = main_gdf[main_gdf['Year'] == year]
+    folium.GeoJson(
+        year_data,
+        style_function=lambda feature, color=color: {
+            "fillColor": color,
+            "color": color,
+            "weight": 1,
+            "fillOpacity": 0.6
+        },
+        tooltip=folium.GeoJsonTooltip(
+            fields=["subdivision", "Area_hectare", "Year"],
+            aliases=["Subdivision:", "Area (ha):", "Year:"],
+            localize=True
+        )
+    ).add_to(m)
 
-# Add OpenStreetMap as basemap
-basemap = pdk.Layer(
-    "TileLayer",
-    url="https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    opacity=1.0
-)
-
-# Layer visibility toggles
-st.sidebar.header("Layer Controls")
-show_main_layer = st.sidebar.checkbox("Show Main Layer", value=True)
-show_sum_layer = st.sidebar.checkbox("Show Summary Layer", value=True)
-
-# Update layer visibility
-main_layer.visible = show_main_layer
-sum_layer.visible = show_sum_layer
-
-# Create deck
-deck = pdk.Deck(
-    layers=[basemap, main_layer, sum_layer],
-    initial_view_state=view_state,
-    map_style=None,  # Remove the default dark theme
-    tooltip={
-        'html': '<b>Subdivision:</b> {subdivision}<br/>'
-                '<b>Area (ha):</b> {Area_hectare}<br/>'
-                '<b>Year:</b> {Year}',
-        'style': {'color': 'white'}
+# Add summary layer (black outlines)
+folium.GeoJson(
+    sum_gdf,
+    style_function=lambda feature: {
+        "color": "black",
+        "weight": 2,
+        "fillOpacity": 0
     }
-)
+).add_to(m)
 
-# Display map
-st.pydeck_chart(deck)
+# Display map using Streamlit-Folium
+from streamlit_folium import st_folium
+st_folium(m, width=700, height=500)
 
 # Create summary tables
 st.header("Summary Tables")
@@ -156,4 +130,3 @@ fig.update_traces(marker_color='rgb(158,202,225)', marker_line_color='rgb(8,48,1
                   marker_line_width=1.5, opacity=0.6)
 
 st.plotly_chart(fig, use_container_width=True)
-print(main_gdf[['Year', 'color']].head())
