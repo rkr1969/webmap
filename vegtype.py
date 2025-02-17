@@ -36,11 +36,9 @@ sum_layer_url = base_url + "subdivision_sum.geojson"
 if st.session_state.vegetation_gdf is None or st.session_state.sum_gdf is None:
     vegetation_gdf = load_geojson(vegetation_layer_url)
     sum_gdf = load_geojson(sum_layer_url)
-
     if vegetation_gdf is None or sum_gdf is None:
         st.error("Failed to load one or more GeoJSON files. Please check the URLs and data formats.")
         st.stop()
-
     # Reproject geometries to EPSG:4326 (required by Folium)
     try:
         vegetation_gdf = vegetation_gdf.to_crs(epsg=4326)
@@ -48,7 +46,6 @@ if st.session_state.vegetation_gdf is None or st.session_state.sum_gdf is None:
     except Exception as e:
         st.error(f"Error reprojecting geometries: {e}")
         st.stop()
-
     # Fix invalid geometries
     vegetation_gdf['geometry'] = vegetation_gdf.geometry.apply(
         lambda geom: geom.buffer(0) if geom is not None and not geom.is_valid else geom
@@ -56,7 +53,6 @@ if st.session_state.vegetation_gdf is None or st.session_state.sum_gdf is None:
     sum_gdf['geometry'] = sum_gdf.geometry.apply(
         lambda geom: geom.buffer(0) if geom is not None and not geom.is_valid else geom
     )
-
     # Validate data
     required_columns_veg = {"subdivision", "vegetation_zone", "vegetation_type", "area_ha"}
     required_columns_sum = {"subdivision"}
@@ -66,7 +62,6 @@ if st.session_state.vegetation_gdf is None or st.session_state.sum_gdf is None:
     if not required_columns_sum.issubset(sum_gdf.columns):
         st.error(f"Missing required columns in subdivision data. Expected: {required_columns_sum}, Found: {sum_gdf.columns}")
         st.stop()
-
     # Store data in session state
     st.session_state.vegetation_gdf = vegetation_gdf
     st.session_state.sum_gdf = sum_gdf
@@ -88,7 +83,6 @@ if st.session_state.folium_map is None:
             zoom_start=10,
             tiles="OpenStreetMap"  # Use OpenStreetMap as the base layer
         )
-
         # Add Fullscreen plugin
         Fullscreen().add_to(m)
 
@@ -115,12 +109,30 @@ if st.session_state.folium_map is None:
             ).add_to(vegetation_layer_group)
 
         # Add subdivision outlines layer
-folium.GeoJson(
-    sum_gdf,
-    style_function=lambda feature: {
-        "color": "black",  # Set outline color
-        "weight": 2,       # Set line weight
-        "fillOpacity": 0   # Make sure it is only an outline
-    }
-).add_to(map)
+        folium.GeoJson(
+            sum_gdf,
+            style_function=lambda feature: {
+                "color": "black",  # Set outline color
+                "weight": 2,       # Set line weight
+                "fillOpacity": 0   # Make sure it is only an outline
+            }
+        ).add_to(sum_layer_group)
 
+        # Add FeatureGroups to the map
+        vegetation_layer_group.add_to(m)
+        sum_layer_group.add_to(m)
+
+        # Add LayerControl to toggle layers
+        folium.LayerControl().add_to(m)
+
+        # Store the map in session state
+        st.session_state.folium_map = m
+        st.session_state.map_initialized = True
+
+    except Exception as e:
+        st.error(f"Error creating Folium map: {e}")
+        st.stop()
+
+# Display the Folium map using Streamlit
+if st.session_state.folium_map:
+    st_folium(st.session_state.folium_map, width=700, height=500)
