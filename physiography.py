@@ -30,7 +30,9 @@ def calculate_summary_tables(gdf):
 
     # Table 2: Subdivision-wise percentage of total area within each physiography
     table2 = gdf.groupby(['Physiography', 'subdivision'])['Area_sqkm'].sum().reset_index()
-    table2['Percentage'] = table2.groupby('Physiography')['Area_sqkm'].apply(lambda x: (x / x.sum()) * 100)
+    table2['Percentage'] = (
+        table2.groupby('Physiography')['Area_sqkm'].transform(lambda x: (x / x.sum()) * 100)
+    )
 
     return table1, table2
 
