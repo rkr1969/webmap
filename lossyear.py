@@ -29,6 +29,9 @@ year_color_map = {year: color for year, color in zip(unique_years, colors)}
 # Add a color column to main_gdf based on the Year
 main_gdf['color'] = main_gdf['Year'].apply(lambda year: list(year_color_map[year]) + [100])
 
+# Calculate total tree loss area
+total_loss = main_gdf['Area_hectare'].sum()
+
 # Create PyDeck layers
 main_layer = pdk.Layer(
     'PolygonLayer',
@@ -39,7 +42,8 @@ main_layer = pdk.Layer(
     get_fill_color='color',  # Use the precomputed color column
     opacity=0.4,
     pickable=True,
-    auto_highlight=True
+    auto_highlight=True,
+    visible=True  # Initially visible
 )
 
 sum_layer = pdk.Layer(
@@ -49,7 +53,8 @@ sum_layer = pdk.Layer(
     stroked=True,
     filled=False,
     get_line_color=[0, 0, 0],
-    pickable=True
+    pickable=True,
+    visible=True  # Initially visible
 )
 
 # Set view state
@@ -59,9 +64,25 @@ view_state = pdk.ViewState(
     zoom=10
 )
 
+# Add OpenStreetMap as basemap
+basemap = pdk.Layer(
+    "TileLayer",
+    url="https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    opacity=1.0
+)
+
+# Layer visibility toggles
+st.sidebar.header("Layer Controls")
+show_main_layer = st.sidebar.checkbox("Show Main Layer", value=True)
+show_sum_layer = st.sidebar.checkbox("Show Summary Layer", value=True)
+
+# Update layer visibility
+main_layer.visible = show_main_layer
+sum_layer.visible = show_sum_layer
+
 # Create deck
 deck = pdk.Deck(
-    layers=[main_layer, sum_layer],
+    layers=[basemap, main_layer, sum_layer],
     initial_view_state=view_state,
     tooltip={
         'html': '<b>Subdivision:</b> {subdivision}<br/>'
@@ -77,8 +98,9 @@ st.pydeck_chart(deck)
 # Create summary tables
 st.header("Summary Tables")
 
-# Table 1: Year-wise sum
+# Table 1: Year-wise sum with percentage of total
 table1 = main_gdf.groupby('Year')['Area_hectare'].sum().reset_index()
+table1['% of Total'] = (table1['Area_hectare'] / total_loss * 100).round(2)
 st.subheader("Year-wise Tree Loss Area (hectares)")
 st.dataframe(table1)
 st.download_button(
@@ -88,8 +110,18 @@ st.download_button(
     mime='text/csv'
 )
 
-# Table 2: Subdivision and Year-wise sum
+# Table 2: Subdivision and Year-wise sum with percentages
 table2 = main_gdf.groupby(['subdivision', 'Year'])['Area_hectare'].sum().reset_index()
+
+# Calculate % of subdivision total
+subdivision_totals = table2.groupby('subdivision')['Area_hectare'].sum()
+table2['% of Subdivision'] = table2.apply(
+    lambda row: (row['Area_hectare'] / subdivision_totals[row['subdivision']] * 100).round(2), axis=1
+)
+
+# Calculate % of overall total
+table2['% of Total'] = (table2['Area_hectare'] / total_loss * 100).round(2)
+
 st.subheader("Subdivision & Year-wise Tree Loss Area (hectares)")
 st.dataframe(table2)
 st.download_button(
