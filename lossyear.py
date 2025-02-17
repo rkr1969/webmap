@@ -26,6 +26,9 @@ unique_years = sorted(main_gdf['Year'].unique())
 colors = [tuple(random.randint(0, 255) for _ in range(3)) for _ in unique_years]
 year_color_map = {year: color for year, color in zip(unique_years, colors)}
 
+# Add a color column to main_gdf based on the Year
+main_gdf['color'] = main_gdf['Year'].apply(lambda year: list(year_color_map[year]) + [100])
+
 # Create PyDeck layers
 main_layer = pdk.Layer(
     'PolygonLayer',
@@ -33,12 +36,7 @@ main_layer = pdk.Layer(
     get_polygon='geometry.coordinates',
     stroked=False,
     filled=True,
-    get_fill_color=[
-        year_color_map[main_gdf['Year'][i]][0], 
-        year_color_map[main_gdf['Year'][i]][1], 
-        year_color_map[main_gdf['Year'][i]][2], 
-        100
-    ],
+    get_fill_color='color',  # Use the precomputed color column
     opacity=0.4,
     pickable=True,
     auto_highlight=True
