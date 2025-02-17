@@ -10,10 +10,8 @@ from streamlit_folium import st_folium
 # Initialize session state variables
 if "map_initialized" not in st.session_state:
     st.session_state.map_initialized = False
-if "main_gdf" not in st.session_state:
-    st.session_state.main_gdf = None
-if "sum_gdf" not in st.session_state:
-    st.session_state.sum_gdf = None
+if "folium_map" not in st.session_state:
+    st.session_state.folium_map = None
 
 # Cache data loading to prevent reloading on every rerun
 @st.cache_data
@@ -30,7 +28,7 @@ main_layer_url = base_url + "lossyear_subdivision.geojson"
 sum_layer_url = base_url + "subdivision_sum.geojson"
 
 # Load GeoJSON data using cached function
-if st.session_state.main_gdf is None or st.session_state.sum_gdf is None:
+if st.session_state.folium_map is None:
     main_gdf = load_geojson(main_layer_url)
     sum_gdf = load_geojson(sum_layer_url)
 
@@ -42,21 +40,12 @@ if st.session_state.main_gdf is None or st.session_state.sum_gdf is None:
     main_gdf['geometry'] = main_gdf.geometry.apply(lambda geom: geom.buffer(0) if not geom.is_valid else geom)
     sum_gdf['geometry'] = sum_gdf.geometry.apply(lambda geom: geom.buffer(0) if not geom.is_valid else geom)
 
-    # Store data in session state
-    st.session_state.main_gdf = main_gdf
-    st.session_state.sum_gdf = sum_gdf
+    # Generate random colors for years
+    unique_years = sorted(main_gdf['Year'].unique())
+    colors = ["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)]) for _ in unique_years]
+    year_color_map = {year: color for year, color in zip(unique_years, colors)}
 
-# Retrieve data from session state
-main_gdf = st.session_state.main_gdf
-sum_gdf = st.session_state.sum_gdf
-
-# Generate random colors for years
-unique_years = sorted(main_gdf['Year'].unique())
-colors = ["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)]) for _ in unique_years]
-year_color_map = {year: color for year, color in zip(unique_years, colors)}
-
-# Create Folium map
-def create_folium_map():
+    # Create Folium map
     m = folium.Map(
         location=[main_gdf.geometry.centroid.y.mean(), main_gdf.geometry.centroid.x.mean()],
         zoom_start=10,
@@ -94,14 +83,13 @@ def create_folium_map():
         }
     ).add_to(m)
 
-    return m
-
-# Display map using Streamlit-Folium
-if not st.session_state.map_initialized:
+    # Store the map in session state
+    st.session_state.folium_map = m
     st.session_state.map_initialized = True
-    st.session_state.folium_map = create_folium_map()
 
-st_folium(st.session_state.folium_map, width=700, height=500)
+# Display the map using st_folium
+if st.session_state.folium_map is not None:
+    st_folium(st.session_state.folium_map, width=700, height=500)
 
 # Create summary tables
 st.header("Summary Tables")
