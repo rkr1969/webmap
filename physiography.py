@@ -4,7 +4,7 @@ import pandas as pd
 import folium
 from folium import GeoJson
 from branca.colormap import LinearColormap
-from io import BytesIO
+from streamlit_folium import st_folium  # Import st_folium
 
 # Define colors with 40% transparency
 COLORS = {
@@ -92,7 +92,7 @@ def main():
 
     # Display the map
     st.subheader("Interactive Map")
-    folium_static = st_folium(m, width=700, height=500)
+    folium_static = st_folium(m, width=700, height=500)  # Use st_folium to render the map
 
 if __name__ == "__main__":
     main()
