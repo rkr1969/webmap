@@ -2,9 +2,8 @@ import streamlit as st
 import pandas as pd
 import geopandas as gpd
 import folium
-from folium.plugins import MarkerCluster
 from branca.colormap import LinearColormap
-from io import BytesIO
+import base64
 
 # Load GeoJSON file from GitHub
 @st.cache_data
@@ -21,23 +20,25 @@ COLORS = {
 
 # Function to calculate summary tables
 def calculate_summary_tables(gdf):
-    # Table-1: Subdivision-wise percentage of total Area_sqkm by physiography
+    # Table-1: Subdivision-wise percentage of total Area_sqkm by Physiography
     table1 = (
         gdf.groupby(['Physiography', 'subdivision'])['Area_sqkm']
         .sum()
-        .groupby(level=0)
-        .apply(lambda x: 100 * x / x.sum())
-        .reset_index(name='Percentage')
+        .groupby(level=0)  # Group by 'Physiography'
+        .apply(lambda x: 100 * x / x.sum())  # Calculate percentage
+        .reset_index()  # Reset index without specifying `name`
     )
+    table1.rename(columns={0: 'Percentage'}, inplace=True)  # Rename the aggregated column
 
     # Table-2: Physiography-wise percentage of total Area_sqkm
     total_area = gdf['Area_sqkm'].sum()
     table2 = (
         gdf.groupby('Physiography')['Area_sqkm']
         .sum()
-        .apply(lambda x: 100 * x / total_area)
-        .reset_index(name='Percentage')
+        .apply(lambda x: 100 * x / total_area)  # Calculate percentage
+        .reset_index()  # Reset index without specifying `name`
     )
+    table2.rename(columns={'Area_sqkm': 'Percentage'}, inplace=True)  # Rename the aggregated column
 
     return table1, table2
 
@@ -75,12 +76,12 @@ def main():
     folium.GeoJson(
         gdf,
         style_function=lambda x: {
-            'fillColor': COLORS.get(x['properties']['physiography'], 'rgba(0, 0, 0, 0.4)'),
+            'fillColor': COLORS.get(x['properties']['Physiography'], 'rgba(0, 0, 0, 0.4)'),
             'color': 'none',  # No outer line
             'fillOpacity': 0.4
         },
         tooltip=folium.GeoJsonTooltip(
-            fields=['subdivision', 'physiography', 'Area_sqkm'],
+            fields=['subdivision', 'Physiography', 'Area_sqkm'],
             aliases=['Subdivision:', 'Physiography:', 'Area (sqkm):']
         )
     ).add_to(m)
