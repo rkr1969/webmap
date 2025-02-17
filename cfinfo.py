@@ -58,7 +58,7 @@ popup_mr = GeoJsonPopup(
 
 folium.GeoJson(
     gdf_mr,
-    name='macro_element_div_1',  # Name of the first layer
+    name='Management Regime',  # Name of the first layer
     popup=popup_mr,
     tooltip=folium.GeoJsonTooltip(fields=popup_fields_mr),
     style_function=lambda x: {'fillColor': 'green', 'color': 'black', 'weight': 1, 'fillOpacity': 0.5},  # Style for the first layer
