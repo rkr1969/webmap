@@ -91,6 +91,7 @@ sum_layer.visible = show_sum_layer
 deck = pdk.Deck(
     layers=[basemap, main_layer, sum_layer],
     initial_view_state=view_state,
+    map_style=None,  # Remove the default dark theme
     tooltip={
         'html': '<b>Subdivision:</b> {subdivision}<br/>'
                 '<b>Area (ha):</b> {Area_hectare}<br/>'
