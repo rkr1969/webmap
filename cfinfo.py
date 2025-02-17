@@ -42,7 +42,7 @@ st.plotly_chart(fig_pie, use_container_width=True)
 # Step 4: Create a Folium map with popups
 m = folium.Map(location=[gdf.geometry.centroid.y.mean(), gdf.geometry.centroid.x.mean()], zoom_start=10)
 
-# Define the popup fields
+# Define the popup fields for the first layer
 popup_fields = ['Name', 'code', 'regime', 'area_ha']
 popup = GeoJsonPopup(
     fields=popup_fields,
@@ -52,13 +52,25 @@ popup = GeoJsonPopup(
     style="background-color: yellow;",
 )
 
-# Add GeoJSON layer to the map
+# Add the first GeoJSON layer to the map (existing layer)
 folium.GeoJson(
     gdf,
     popup=popup,
     tooltip=folium.GeoJsonTooltip(fields=popup_fields),
 ).add_to(m)
 
+# Add a second GeoJSON layer with all fields as tooltips (subdivision_sum layer)
+all_fields = gdf.columns.tolist()  # Get all column names as fields
+folium.GeoJson(
+    gdf,
+    name='subdivision_sum',  # Name of the new layer
+    tooltip=folium.GeoJsonTooltip(fields=all_fields),  # Use all fields as tooltips
+    style_function=lambda x: {'fillColor': 'blue', 'color': 'black', 'weight': 1, 'fillOpacity': 0.1},  # Style for the layer
+).add_to(m)
+
+# Add a LayerControl to toggle between layers
+folium.LayerControl().add_to(m)
+
 # Display the map in Streamlit
-st.subheader("Interactive Map")
+st.subheader("Interactive Map with Subdivision Summary Layer")
 st_folium(m, width=700, height=500)
