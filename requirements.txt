@@ -7,3 +7,4 @@ ipython
 streamlit
 streamlit-folium
 plotly
+st_folium
