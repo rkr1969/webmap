@@ -2,7 +2,6 @@ import streamlit as st
 import geopandas as gpd
 import folium
 from folium.plugins import Fullscreen
-import random
 from streamlit_folium import st_folium
 
 # Initialize session state variables
@@ -68,10 +67,11 @@ if st.session_state.vegetation_gdf is None or st.session_state.sum_gdf is None:
 vegetation_gdf = st.session_state.vegetation_gdf
 sum_gdf = st.session_state.sum_gdf
 
-# Generate random colors for vegetation types
-unique_vegetation_types = sorted(vegetation_gdf['vegetation_type'].unique())
-colors = ["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)]) for _ in unique_vegetation_types]
-vegetation_color_map = {vegetation_type: color for vegetation_type, color in zip(unique_vegetation_types, colors)}
+# Define fixed colors for vegetation types
+vegetation_color_map = {
+    "Lower Tropical Sal and Mixed Broad Leav": "red",
+    "Hill Sal Forest": "blue",
+}
 
 # Create Folium map only if it hasn't been initialized yet
 if not st.session_state.map_initialized:
@@ -85,10 +85,10 @@ if not st.session_state.map_initialized:
         Fullscreen().add_to(m)
 
         # Create FeatureGroups for each layer
-        vegetation_layer_group = folium.FeatureGroup(name="Vegetation Type (Random Colors)")
+        vegetation_layer_group = folium.FeatureGroup(name="Vegetation Type (Fixed Colors)")
         sum_layer_group = folium.FeatureGroup(name="Subdivision Outlines")
 
-        # Add vegetation layer with random colors based on vegetation_type
+        # Add vegetation layer with fixed colors based on vegetation_type
         for vegetation_type, color in vegetation_color_map.items():
             vegetation_data = vegetation_gdf[vegetation_gdf['vegetation_type'] == vegetation_type]
             folium.GeoJson(
@@ -96,7 +96,7 @@ if not st.session_state.map_initialized:
                 style_function=lambda feature, color=color: {
                     "fillColor": color,
                     "color": "none",  # No polygon outlines
-                    "fillOpacity": 0.4  # 40% transparency
+                    "fillOpacity": 0.6  # 60% transparency
                 },
                 tooltip=folium.GeoJsonTooltip(
                     fields=["subdivision", "vegetation_zone", "vegetation_type", "area_ha"],
