@@ -3,10 +3,17 @@ import pandas as pd
 import geopandas as gpd
 import folium
 from folium.plugins import Fullscreen
-from branca.colormap import LinearColormap
 import random
 import plotly.express as px
 from streamlit_folium import st_folium
+
+# Initialize session state variables
+if "map_initialized" not in st.session_state:
+    st.session_state.map_initialized = False
+if "main_gdf" not in st.session_state:
+    st.session_state.main_gdf = None
+if "sum_gdf" not in st.session_state:
+    st.session_state.sum_gdf = None
 
 # Cache data loading to prevent reloading on every rerun
 @st.cache_data
@@ -23,25 +30,30 @@ main_layer_url = base_url + "lossyear_subdivision.geojson"
 sum_layer_url = base_url + "subdivision_sum.geojson"
 
 # Load GeoJSON data using cached function
-main_gdf = load_geojson(main_layer_url)
-sum_gdf = load_geojson(sum_layer_url)
+if st.session_state.main_gdf is None or st.session_state.sum_gdf is None:
+    main_gdf = load_geojson(main_layer_url)
+    sum_gdf = load_geojson(sum_layer_url)
 
-# Reproject geometries to EPSG:4326 (required by Folium)
-main_gdf = main_gdf.to_crs(epsg=4326)
-sum_gdf = sum_gdf.to_crs(epsg=4326)
+    # Reproject geometries to EPSG:4326 (required by Folium)
+    main_gdf = main_gdf.to_crs(epsg=4326)
+    sum_gdf = sum_gdf.to_crs(epsg=4326)
+
+    # Fix invalid geometries
+    main_gdf['geometry'] = main_gdf.geometry.apply(lambda geom: geom.buffer(0) if not geom.is_valid else geom)
+    sum_gdf['geometry'] = sum_gdf.geometry.apply(lambda geom: geom.buffer(0) if not geom.is_valid else geom)
+
+    # Store data in session state
+    st.session_state.main_gdf = main_gdf
+    st.session_state.sum_gdf = sum_gdf
+
+# Retrieve data from session state
+main_gdf = st.session_state.main_gdf
+sum_gdf = st.session_state.sum_gdf
 
 # Generate random colors for years
 unique_years = sorted(main_gdf['Year'].unique())
 colors = ["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)]) for _ in unique_years]
 year_color_map = {year: color for year, color in zip(unique_years, colors)}
-
-# Debugging: Check for invalid geometries
-print("Invalid geometries in main_gdf:", main_gdf[~main_gdf.geometry.is_valid].shape[0])
-print("Invalid geometries in sum_gdf:", sum_gdf[~sum_gdf.geometry.is_valid].shape[0])
-
-# Fix invalid geometries
-main_gdf['geometry'] = main_gdf.geometry.apply(lambda geom: geom.buffer(0) if not geom.is_valid else geom)
-sum_gdf['geometry'] = sum_gdf.geometry.apply(lambda geom: geom.buffer(0) if not geom.is_valid else geom)
 
 # Create Folium map
 def create_folium_map():
@@ -85,7 +97,62 @@ def create_folium_map():
     return m
 
 # Display map using Streamlit-Folium
-try:
-    st_folium(create_folium_map(), width=700, height=500)
-except Exception as e:
-    st.error(f"Error displaying map: {e}")
+if not st.session_state.map_initialized:
+    st.session_state.map_initialized = True
+    st.session_state.folium_map = create_folium_map()
+
+st_folium(st.session_state.folium_map, width=700, height=500)
+
+# Create summary tables
+st.header("Summary Tables")
+
+# Table 1: Year-wise sum with percentage of total
+table1 = main_gdf.groupby('Year')['Area_hectare'].sum().reset_index()
+table1['% of Total'] = (table1['Area_hectare'] / table1['Area_hectare'].sum() * 100).round(2)
+st.subheader("Year-wise Tree Loss Area (hectares)")
+st.dataframe(table1)
+st.download_button(
+    label="Download Table 1",
+    data=table1.to_csv().encode('utf-8'),
+    file_name='year_wise_tree_loss.csv',
+    mime='text/csv'
+)
+
+# Table 2: Subdivision and Year-wise sum with percentages
+table2 = main_gdf.groupby(['subdivision', 'Year'])['Area_hectare'].sum().reset_index()
+
+# Calculate % of subdivision total
+subdivision_totals = table2.groupby('subdivision')['Area_hectare'].sum()
+table2['% of Subdivision'] = table2.apply(
+    lambda row: (row['Area_hectare'] / subdivision_totals[row['subdivision']] * 100).round(2), axis=1
+)
+
+# Calculate % of overall total
+table2['% of Total'] = (table2['Area_hectare'] / table2['Area_hectare'].sum() * 100).round(2)
+
+st.subheader("Subdivision & Year-wise Tree Loss Area (hectares)")
+st.dataframe(table2)
+st.download_button(
+    label="Download Table 2",
+    data=table2.to_csv().encode('utf-8'),
+    file_name='subdivision_year_wise_tree_loss.csv',
+    mime='text/csv'
+)
+
+# Interactive Chart: Year vs Area_hectare
+st.header("Interactive Chart: Year vs Area_hectare")
+chart_data = main_gdf.groupby('Year')['Area_hectare'].sum().reset_index()
+
+fig = px.bar(
+    chart_data,
+    x='Year',
+    y='Area_hectare',
+    title="Year-wise Tree Loss Area (hectares)",
+    labels={'Year': 'Year', 'Area_hectare': 'Tree Loss Area (hectares)'},
+    template="plotly_dark"  # Optional: Dark theme for better aesthetics
+)
+
+fig.update_traces(marker_color='rgb(158,202,225)', marker_line_color='rgb(8,48,107)',
+                  marker_line_width=1.5, opacity=0.6)
+
+st.plotly_chart(fig, use_container_width=True)
