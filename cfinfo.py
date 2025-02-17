@@ -10,7 +10,7 @@ import plotly.express as px  # For interactive pie chart
 st.title("Management Regime Map")
 
 # Load the GeoJSON file from GitHub
-GITHUB_URL = "https://raw.githubusercontent.com/rkr1969/webmap/main/Management_Regime.geojson"
+GITHUB_URL = "https://raw.githubusercontent.com/rkr1969/webmap/main/ManagementRegime.geojson"
 gdf = gpd.read_file(GITHUB_URL)
 
 # Ensure the GeoDataFrame has the required columns
