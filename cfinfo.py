@@ -60,11 +60,12 @@ folium.GeoJson(
 ).add_to(m)
 
 # Add a second GeoJSON layer with all fields as tooltips (subdivision_sum layer)
-all_fields = gdf.columns.tolist()  # Get all column names as fields
+# Exclude the 'geometry' column from the list of fields
+all_fields = [col for col in gdf.columns if col != 'geometry']  # Exclude 'geometry'
 folium.GeoJson(
     gdf,
     name='subdivision_sum',  # Name of the new layer
-    tooltip=folium.GeoJsonTooltip(fields=all_fields),  # Use all fields as tooltips
+    tooltip=folium.GeoJsonTooltip(fields=all_fields),  # Use all fields except 'geometry'
     style_function=lambda x: {'fillColor': 'blue', 'color': 'black', 'weight': 1, 'fillOpacity': 0.1},  # Style for the layer
 ).add_to(m)
 
