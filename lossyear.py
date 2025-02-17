@@ -4,6 +4,7 @@ import geopandas as gpd
 import pydeck as pdk
 from datetime import datetime
 import random
+import plotly.express as px  # For interactive charts
 
 # Load data from GitHub
 base_url = "https://raw.githubusercontent.com/rkr1969/webmap/main/"
@@ -136,3 +137,21 @@ st.download_button(
     file_name='subdivision_year_wise_tree_loss.csv',
     mime='text/csv'
 )
+
+# Interactive Chart: Year vs Area_hectare
+st.header("Interactive Chart: Year vs Area_hectare")
+chart_data = main_gdf.groupby('Year')['Area_hectare'].sum().reset_index()
+
+fig = px.bar(
+    chart_data,
+    x='Year',
+    y='Area_hectare',
+    title="Year-wise Tree Loss Area (hectares)",
+    labels={'Year': 'Year', 'Area_hectare': 'Tree Loss Area (hectares)'},
+    template="plotly_dark"  # Optional: Dark theme for better aesthetics
+)
+
+fig.update_traces(marker_color='rgb(158,202,225)', marker_line_color='rgb(8,48,107)',
+                  marker_line_width=1.5, opacity=0.6)
+
+st.plotly_chart(fig, use_container_width=True)
