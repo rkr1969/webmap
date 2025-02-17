@@ -80,9 +80,10 @@ if st.session_state.folium_map is None:
                 "fillOpacity": 0.6
             },
             tooltip=folium.GeoJsonTooltip(
-                fields=["subdivision", "Area_hectare", "Year"],
-                aliases=["Subdivision:", "Area (ha):", "Year:"],
-                localize=True
+                fields=["subdivision", "Area_hectare", "Year"],  # Fields to display in tooltip
+                aliases=["Subdivision:", "Area (ha):", "Year:"],  # Custom labels for fields
+                localize=True,  # Format numbers for better readability
+                sticky=True  # Keep tooltip visible while hovering
             )
         ).add_to(m)
 
@@ -93,7 +94,13 @@ if st.session_state.folium_map is None:
             "color": "black",
             "weight": 2,
             "fillOpacity": 0
-        }
+        },
+        tooltip=folium.GeoJsonTooltip(
+            fields=["subdivision"],  # Fields to display in tooltip
+            aliases=["Subdivision:"],  # Custom label for field
+            localize=True,
+            sticky=True
+        )
     ).add_to(m)
 
     # Store the map in session state
