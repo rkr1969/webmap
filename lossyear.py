@@ -102,7 +102,7 @@ if st.session_state.folium_map is None:
 
 # Display the map using st_folium
 if st.session_state.folium_map is not None:
-    st_folium(st.session_state.folium_map, width=700, height=500)
+    st_folium(st.session_state.folium_map, width=700, height=500, returned_objects=[])
 
 # Create summary tables
 st.header("Summary Tables")
