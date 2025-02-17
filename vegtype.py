@@ -134,6 +134,26 @@ if not st.session_state.map_initialized:
 # Display the Folium map using Streamlit
 if st.session_state.folium_map:
     st_folium(st.session_state.folium_map, width=700, height=500, returned_objects=[])
-    # Display a table of vegetation data
-st.write("Vegetation Data:")
-st.dataframe(vegetation_gdf)
+
+# Summarize vegetation data by subdivision and vegetation type
+summary_df = (
+    vegetation_gdf.groupby(["subdivision", "vegetation_type"])["area_ha"]
+    .sum()
+    .reset_index()
+    .rename(columns={"area_ha": "total_area_ha"})
+)
+
+# Calculate total area per subdivision
+total_area_per_subdivision = summary_df.groupby("subdivision")["total_area_ha"].transform("sum")
+
+# Add percentage column
+summary_df["percentage"] = (summary_df["total_area_ha"] / total_area_per_subdivision) * 100
+
+# Display the summarized table
+st.write("### Vegetation Summary by Subdivision")
+st.dataframe(summary_df)
+
+# Optionally, format the percentage column for better readability
+summary_df["percentage"] = summary_df["percentage"].round(2)
+st.write("### Formatted Vegetation Summary")
+st.dataframe(summary_df)
