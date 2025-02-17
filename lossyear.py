@@ -29,14 +29,21 @@ year_color_map = {year: color for year, color in zip(unique_years, colors)}
 # Add a color column to main_gdf based on the Year
 main_gdf['color'] = main_gdf['Year'].apply(lambda year: list(year_color_map[year]) + [100])
 
+# Ensure geometries are valid and in the correct format
+main_gdf['geometry'] = main_gdf.geometry.apply(lambda geom: geom if geom.is_valid else geom.buffer(0))
+sum_gdf['geometry'] = sum_gdf.geometry.apply(lambda geom: geom if geom.is_valid else geom.buffer(0))
+
+# Reproject geometries to EPSG:4326 (required by PyDeck)
+main_gdf = main_gdf.to_crs(epsg=4326)
+sum_gdf = sum_gdf.to_crs(epsg=4326)
+
 # Calculate total tree loss area
 total_loss = main_gdf['Area_hectare'].sum()
 
 # Create PyDeck layers
 main_layer = pdk.Layer(
-    'PolygonLayer',
-    data=main_gdf,
-    get_polygon='geometry.coordinates',
+    'GeoJsonLayer',  # Use GeoJsonLayer instead of PolygonLayer
+    data=main_gdf.__geo_interface__,  # Pass GeoJSON-compatible data
     stroked=False,
     filled=True,
     get_fill_color='color',  # Use the precomputed color column
@@ -47,9 +54,8 @@ main_layer = pdk.Layer(
 )
 
 sum_layer = pdk.Layer(
-    'PolygonLayer',
-    data=sum_gdf,
-    get_polygon='geometry.coordinates',
+    'GeoJsonLayer',  # Use GeoJsonLayer instead of PolygonLayer
+    data=sum_gdf.__geo_interface__,  # Pass GeoJSON-compatible data
     stroked=True,
     filled=False,
     get_line_color=[0, 0, 0],
