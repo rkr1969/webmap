@@ -1,14 +1,6 @@
-requests
-folium
 ipywidgets
-pandas
-geopandas
 ipython
-streamlit
-streamlit-folium
-plotly
 st_folium
-branca
 streamlit==1.22.0
 requests==2.31.0
 folium==0.14.0
@@ -16,5 +8,4 @@ pandas==2.0.3
 geopandas==0.13.2
 branca==0.6.0
 plotly==5.18.0
-st_folium
 streamlit-folium==0.24.0
