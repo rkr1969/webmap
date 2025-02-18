@@ -17,3 +17,4 @@ geopandas==0.13.2
 streamlit-folium==0.10.0
 branca==0.6.0
 plotly==5.18.0
+st_folium
